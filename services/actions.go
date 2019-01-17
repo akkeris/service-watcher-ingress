@@ -1,8 +1,8 @@
 package services
 
 import (
-	utils "akkeris-service-watcher-ingress/utils"
-	structs "akkeris-service-watcher-ingress/structs"
+	utils "service-watcher-ingress/utils"
+	structs "service-watcher-ingress/structs"
 	corev1 "k8s.io/api/core/v1"
 	"encoding/json"
 	"fmt"

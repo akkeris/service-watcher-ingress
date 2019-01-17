@@ -1,5 +1,5 @@
 #!/bin/sh
 
-/go/src/akkeris-service-watcher-ingress/process
+/go/src/service-watcher-ingress/process
 
 

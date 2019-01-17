@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"text/template"
-	utils "akkeris-service-watcher-ingress/utils"
+	utils "service-watcher-ingress/utils"
 )
 
 const tokenconfigtemplate = `apiVersion: v1

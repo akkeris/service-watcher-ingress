@@ -7,6 +7,6 @@ go get github.com/tools/godep
 cd /go/src/k8s.io/client-go/
 git checkout v8.0.0
 godep restore ./...
-cd /go/src/akkeris-service-watcher-ingress/
+cd /go/src/service-watcher-ingress/
 go build process.go
 
