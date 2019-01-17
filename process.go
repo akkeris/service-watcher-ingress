@@ -1,9 +1,9 @@
 package main
 
 import (
-	k8sconfig "akkeris-service-watcher-ingress/k8sconfig"
-	services "akkeris-service-watcher-ingress/services"
-	utils "akkeris-service-watcher-ingress/utils"
+	k8sconfig "service-watcher-ingress/k8sconfig"
+	services "service-watcher-ingress/services"
+	utils "service-watcher-ingress/utils"
 	"encoding/json"
 	"fmt"
 	corev1 "k8s.io/api/core/v1"
