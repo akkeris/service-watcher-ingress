@@ -21,7 +21,8 @@ type TlsSecret struct {
 type SecretsList struct {
 	Items []struct {
 		Metadata struct {
-			Name string `json:"name"`
+			Name      string `json:"name"`
+			Namespace string `json:"namespace"`
 		} `json:"metadata"`
 		Type string `json:"type"`
 	} `json:"items"`

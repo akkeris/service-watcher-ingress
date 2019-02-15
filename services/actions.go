@@ -1,15 +1,15 @@
 package services
 
 import (
-	utils "service-watcher-ingress/utils"
-	structs "service-watcher-ingress/structs"
-	corev1 "k8s.io/api/core/v1"
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"io/ioutil"
-	"encoding/base64"
-	"bytes"
+	corev1 "k8s.io/api/core/v1"
+	"net/http"
+	structs "service-watcher-ingress/structs"
+	utils "service-watcher-ingress/utils"
 )
 
 func DeleteIngress(obj interface{}) {
@@ -28,7 +28,7 @@ func DeleteIngress(obj interface{}) {
 		fmt.Println(err)
 	}
 	defer resp.Body.Close()
-    fmt.Println("delete ingress response: "+resp.Status)
+	fmt.Println("delete ingress response: " + resp.Status)
 }
 func InstallIngress(obj interface{}) {
 	servicename := obj.(*corev1.Service).ObjectMeta.Name
@@ -47,15 +47,20 @@ func InstallIngress(obj interface{}) {
 	var url string
 	internal := isInternal(namespace)
 	if internal {
-		 url = appname+"."+utils.InsideDomain
+		url = appname + "." + utils.InsideDomain
 	}
 	if !internal {
-		url= appname+"."+utils.DefaultDomain
+		url = appname + "." + utils.DefaultDomain
 	}
 	var ingress structs.SimpleAkkerisIngress
 	ingress.Kind = "Ingress"
-	ingress.Metadata.Annotations.KubernetesIoIngressClass = "nginx"
-	ingress.Metadata.Name = appname
+        if internal {
+	    ingress.Metadata.Annotations.KubernetesIoIngressClass = "nginx-internal"
+	}
+        if !internal {
+            ingress.Metadata.Annotations.KubernetesIoIngressClass = "nginx"
+        }
+        ingress.Metadata.Name = appname
 	ingress.Metadata.Namespace = namespace
 	var backend structs.Backend
 	backend.ServiceName = servicename
@@ -69,7 +74,7 @@ func InstallIngress(obj interface{}) {
 	rule.HTTP.Paths = paths
 	ingress.Spec.Rules = append(ingress.Spec.Rules, rule)
 	var tls structs.TLS
-	tls.SecretName =utils.Ingresstlssecret
+	tls.SecretName = utils.Ingresstlssecret
 	tls.Hosts = append(tls.Hosts, url)
 	ingress.Spec.TLS = append(ingress.Spec.TLS, tls)
 
@@ -87,7 +92,7 @@ func InstallIngress(obj interface{}) {
 		fmt.Println(err)
 	}
 	defer resp.Body.Close()
-        fmt.Println("install ingress response: "+resp.Status)
+	fmt.Println("install ingress response: " + resp.Status)
 }
 
 func isInternal(space string) bool {
@@ -141,12 +146,12 @@ func needsTLSSecret(space string, secretname string) (b bool, e error) {
 			toreturn = false
 		}
 	}
-        if toreturn {
-           fmt.Println("namespace "+space+" needs secret")
-        }
-        if !toreturn {
-           fmt.Println("namespace "+space+" already has secret")
-        }
+	if toreturn {
+		fmt.Println("namespace " + space + " needs secret")
+	}
+	if !toreturn {
+		fmt.Println("namespace " + space + " already has secret")
+	}
 	return toreturn, nil
 
 }
@@ -157,14 +162,14 @@ func createTLSSecret(space string, secretname string) (e error) {
 	tlssecret.Kind = "Secret"
 	tlssecret.Metadata.Name = secretname
 	tlssecret.Metadata.Namespace = space
-        if isInternal(space) {
-          tlssecret.Data.TlsKey = utils.InternalKey
-	  tlssecret.Data.TlsCrt = utils.InternalCert + utils.InternalCa
-        }
-        if ! isInternal(space){
-          tlssecret.Data.TlsKey = utils.ExternalKey
-          tlssecret.Data.TlsCrt = utils.ExternalCert + utils.ExternalCa
-        }
+	if isInternal(space) {
+		tlssecret.Data.TlsKey = utils.InternalKey
+		tlssecret.Data.TlsCrt = utils.InternalCert + utils.InternalCa
+	}
+	if !isInternal(space) {
+		tlssecret.Data.TlsKey = utils.ExternalKey
+		tlssecret.Data.TlsCrt = utils.ExternalCert + utils.ExternalCa
+	}
 	tlssecret.Type = "kubernetes.io/tls"
 
 	tlssecret.Data.TlsCrt = base64.StdEncoding.EncodeToString([]byte(tlssecret.Data.TlsCrt))
@@ -186,7 +191,52 @@ func createTLSSecret(space string, secretname string) (e error) {
 		return err
 	}
 	defer resp.Body.Close()
-        fmt.Println("create secret response: "+resp.Status)
+	fmt.Println("create secret response: " + resp.Status)
 	return nil
 }
 
+func deleteTLSSecret(space string, secretname string) (e error) {
+	fmt.Println("updating secret")
+	req, err := http.NewRequest("DELETE", "https://"+utils.Kubernetesapiurl+"/api/v1/namespaces/"+space+"/secrets/"+secretname, nil)
+	req.Header.Add("Content-type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+utils.Kubetoken)
+
+	resp, doerr := utils.HTTPClient.Do(req)
+	if doerr != nil {
+		fmt.Println(err)
+		return err
+	}
+	defer resp.Body.Close()
+	fmt.Println("create secret response: " + resp.Status)
+	return nil
+}
+
+func ResetCerts(ingresstlssecret string) {
+	req, err := http.NewRequest("GET", "https://"+utils.Kubernetesapiurl+"/api/v1/secrets", nil)
+	req.Header.Add("Content-type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+utils.Kubetoken)
+
+	resp, doerr := utils.HTTPClient.Do(req)
+	if doerr != nil {
+		fmt.Println(err)
+	}
+	defer resp.Body.Close()
+	bodybytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
+	var secretlist structs.SecretsList
+	err = json.Unmarshal(bodybytes, &secretlist)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for _, element := range secretlist.Items {
+		if element.Metadata.Name == ingresstlssecret && element.Type == "kubernetes.io/tls" {
+			fmt.Println(element.Metadata.Namespace)
+			deleteTLSSecret(element.Metadata.Namespace, ingresstlssecret)
+			createTLSSecret(element.Metadata.Namespace, ingresstlssecret)
+		}
+
+	}
+}
