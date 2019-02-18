@@ -48,7 +48,7 @@ func SetSecrets() {
     regionapisecret := os.Getenv("REGIONAPI_SECRET")
     Regionapiusername = vault.GetField(regionapisecret, "username")
     Regionapipassword = vault.GetField(regionapisecret, "password")
-	Regionapilocation = vault.GetField(regionapisecret, "location")
+	Regionapilocation = os.Getenv("REGIONAPI_URL")
 	
 	Ingresstlssecret = os.Getenv("INGRESS_TLS_SECRET_NAME")
 	DefaultDomain = os.Getenv("DEFAULT_DOMAIN")
