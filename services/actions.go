@@ -37,6 +37,7 @@ func InstallIngress(obj interface{}) {
 	if namespace == "default" {
 		appname = servicename
 	}
+    if utils.Managingcerts {
 	needssecret, err := needsTLSSecret(namespace, utils.Ingresstlssecret)
 	if err != nil {
 		fmt.Println(err)
@@ -44,6 +45,7 @@ func InstallIngress(obj interface{}) {
 	if needssecret {
 		createTLSSecret(namespace, utils.Ingresstlssecret)
 	}
+     }
 	var url string
 	internal := isInternal(namespace)
 	if internal {
