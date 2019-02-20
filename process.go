@@ -1,11 +1,9 @@
 package main
 
 import (
-	k8sconfig "service-watcher-ingress/k8sconfig"
-	services "service-watcher-ingress/services"
-	utils "service-watcher-ingress/utils"
 	"encoding/json"
 	"fmt"
+	"github.com/stackimpact/stackimpact-go"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	api "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,16 +12,25 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
-	"time"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
-	"github.com/stackimpact/stackimpact-go"
 	"os"
+	k8sconfig "service-watcher-ingress/k8sconfig"
+	services "service-watcher-ingress/services"
+	utils "service-watcher-ingress/utils"
+	"time"
 )
 
 func main() {
-
 	utils.SetSecrets()
+/*
+	if len(os.Args) > 0 {
+		if os.Args[1] == "resetcerts" {
+			services.ResetCerts("ingresstlssecret")
+		}
+		os.Exit(0)
+	}
+*/
 	if os.Getenv("PROFILE") == "true" {
 		fmt.Println("Starting profiler...")
 		_ = stackimpact.Start(stackimpact.Options{

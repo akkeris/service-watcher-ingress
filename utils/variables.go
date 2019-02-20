@@ -8,6 +8,7 @@ import (
 	"strings"
 	"fmt"
 	"k8s.io/client-go/rest"
+        "strconv"
 )
 
 var ExternalCert string
@@ -27,7 +28,7 @@ var InsideDomain string
 var Kubernetesapiurl string
 var Blacklist map[string]bool
 var Client rest.Interface
-
+var Managingcerts bool
 
 func SetSecrets() {
 	externalsecret := vault.GetSecret(os.Getenv("EXTERNAL_CERT_VAULT_PATH"))
@@ -48,7 +49,7 @@ func SetSecrets() {
     regionapisecret := os.Getenv("REGIONAPI_SECRET")
     Regionapiusername = vault.GetField(regionapisecret, "username")
     Regionapipassword = vault.GetField(regionapisecret, "password")
-	Regionapilocation = vault.GetField(regionapisecret, "location")
+	Regionapilocation = os.Getenv("REGIONAPI_URL")
 	
 	Ingresstlssecret = os.Getenv("INGRESS_TLS_SECRET_NAME")
 	DefaultDomain = os.Getenv("DEFAULT_DOMAIN")
@@ -56,6 +57,12 @@ func SetSecrets() {
 	Kubernetesapiurl = os.Getenv("KUBERNETES_API_SERVER")
 	initBlacklist()
 	HTTPClient = &http.Client{}
+        var err error
+        Managingcerts,err = strconv.ParseBool(os.Getenv("MANAGING_CERTS"))
+        if err != nil {
+             fmt.Println(err)
+             os.Exit(1)
+        }
 }
 
 func initBlacklist() {
